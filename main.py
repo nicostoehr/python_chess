@@ -1,4 +1,5 @@
 # pip install pygame
+import math
 
 import pygame
 import socket
@@ -103,8 +104,8 @@ def main():
     game_phase = 0
     host_mode = None
     local_port = 0
-    key_capture = ""
-    key_capture_done = True
+    local_port_locked = False
+    port_error = False
 
 
     # GAME LOOP
@@ -117,10 +118,24 @@ def main():
             if event.type == pygame.QUIT:
                 RUNNING = False
             if event.type == pygame.KEYDOWN:
-                if event.dict["key"] == 13:
-                elif:
-                    key_capture += event.dict["key"]
+                # GAME PHASE 1 KEY OPTIONS
+                if game_phase == 1:
+                    if event.dict["key"] == 13:
+                        if 1024 < local_port < 65535:
+                            local_port_locked = True
+                    elif event.dict["key"] == 8:
+                        port_error = False
+                        if local_port > 10:
+                            local_port = math.floor(local_port / 10)
+                        else:
+                            local_port = 0
 
+                    else:
+                        if event.dict["unicode"].isnumeric() and local_port * 10 + int(event.dict["unicode"]) < 65535:
+                            local_port = local_port * 10 + int(event.dict["unicode"])
+                            port_error = False
+                        else:
+                            port_error = True
 
         # GAME LOGIC: PHASE SEPARATED
         # PHASE 0: CHOOSE HOST/JOIN
@@ -142,13 +157,21 @@ def main():
         if game_phase == 1:
             # HOST CONN SETUP
             if host_mode:
-                render_text("Enter port for UDP socket (confirm with enter): ", 0.1*SCREEN_W, 0.1*SCREEN_H, "l")
-                render_text(f"{local_port} ", 0.1 * SCREEN_W, 0.1 * SCREEN_H, "l")
-
+                if not local_port_locked:
+                    render_text("Enter port for UDP socket (confirm with enter): ", 0.1*SCREEN_W, 0.1*SCREEN_H, "l")
+                    if local_port > 0:
+                        render_text(f"{local_port}", 0.65 * SCREEN_W, 0.1 * SCREEN_H, "l")
+                    if port_error:
+                        render_text(f"Possible ports are in range 1024 - 65535", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l", colors.RED)
 
             # CLIENT CONN SETUP
             else:
-                pass
+                if not local_port_locked:
+                    render_text("Enter port for UDP socket (confirm with enter): ", 0.1 * SCREEN_W, 0.1 * SCREEN_H, "l")
+                    if local_port > 0:
+                        render_text(f"{local_port}", 0.65 * SCREEN_W, 0.1 * SCREEN_H, "l")
+                    if port_error:
+                        render_text(f"Possible ports are in range 1024 - 65535", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l", colors.RED)
 
         # OUTPUT SCREEN IN 60 FPS
         pygame.display.flip()
