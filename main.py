@@ -100,7 +100,7 @@ def render_text(screen_text, screen_pos_x, screen_pos_y, size, font_color=colors
 def main():
 
     # MAIN VARS
-    RUNNING = True
+    running = True
     game_phase = 0
     host_mode = None
     local_port = 0
@@ -115,14 +115,14 @@ def main():
 
 
     # GAME LOOP
-    while RUNNING:
+    while running:
         # CLEAR AFTER FLIP
         SCREEN.fill(colors.BLACK)
 
         # EVENT CATCHES
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                RUNNING = False
+                running = False
             if event.type == pygame.KEYDOWN:
                 # GAME PHASE 1 KEY OPTIONS
                 if game_phase == 1:
