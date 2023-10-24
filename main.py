@@ -1,4 +1,4 @@
-# pip install pygame, socket
+# pip install pygame
 
 import pygame
 import socket
@@ -101,16 +101,29 @@ def main():
     # MAIN VARS
     RUNNING = True
     game_phase = 0
+    host_mode = None
+    local_port = 0
+    key_capture = ""
+    key_capture_done = True
+
 
     # GAME LOOP
     while RUNNING:
+        # CLEAR AFTER FLIP
+        SCREEN.fill(colors.BLACK)
 
         # EVENT CATCHES
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 RUNNING = False
+            if event.type == pygame.KEYDOWN:
+                if event.dict["key"] == 13:
+                elif:
+                    key_capture += event.dict["key"]
 
-        # GAME LOGIC
+
+        # GAME LOGIC: PHASE SEPARATED
+        # PHASE 0: CHOOSE HOST/JOIN
         if game_phase == 0:
 
             host_btn = Button(SCREEN_W*0.25, SCREEN_H*0.2, SCREEN_W*0.25, SCREEN_H*0.6, "HOST", colors.WHITE, colors.WHITE, 2)
@@ -119,9 +132,23 @@ def main():
             render_text("CHOOSE CONNECTION MODE:", SCREEN_W*0.33, SCREEN_H*0.1, "L")
 
             if host_btn.draw():
-                RUNNING = False
+                host_mode = True
+                game_phase = 1
             if join_btn.draw():
-                RUNNING = False
+                host_mode = False
+                game_phase = 1
+
+        # PHASE 1: UDP CONN SETUP
+        if game_phase == 1:
+            # HOST CONN SETUP
+            if host_mode:
+                render_text("Enter port for UDP socket (confirm with enter): ", 0.1*SCREEN_W, 0.1*SCREEN_H, "l")
+                render_text(f"{local_port} ", 0.1 * SCREEN_W, 0.1 * SCREEN_H, "l")
+
+
+            # CLIENT CONN SETUP
+            else:
+                pass
 
         # OUTPUT SCREEN IN 60 FPS
         pygame.display.flip()
