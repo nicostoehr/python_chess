@@ -105,7 +105,13 @@ def main():
     host_mode = None
     local_port = 0
     local_port_locked = False
-    port_error = False
+    local_port_error = False
+    conn_port = 0
+    conn_addr = ""
+    conn_port_locked = False
+    conn_addr_locked = False
+    conn_port_error = False
+    conn_addr_error = False
 
 
     # GAME LOOP
@@ -121,21 +127,81 @@ def main():
                 # GAME PHASE 1 KEY OPTIONS
                 if game_phase == 1:
                     if event.dict["key"] == 13:
-                        if 1024 < local_port < 65535:
-                            local_port_locked = True
+                        if not local_port_locked:
+                            if 1024 < local_port < 65535:
+                                local_port_locked = True
+
+                        elif not conn_port_locked:
+                            if 1024 < conn_port < 65535:
+                                conn_port_locked = True
+
+                        elif not conn_addr_locked:
+                            conn_addr_parts = conn_addr.split(".")
+                            if len(conn_addr_parts) == 4:
+                                addr_valid = True
+                                for addr_part in conn_addr_parts:
+                                    if int(addr_part) > 255:
+                                        addr_valid = False
+                                        break
+                                if addr_valid:
+                                    conn_addr_locked = True
+
                     elif event.dict["key"] == 8:
-                        port_error = False
-                        if local_port > 10:
-                            local_port = math.floor(local_port / 10)
-                        else:
-                            local_port = 0
+                        if not local_port_locked:
+                            local_port_error = False
+                            if local_port > 10:
+                                local_port = math.floor(local_port / 10)
+                            else:
+                                local_port = 0
+
+                        elif not conn_port_locked:
+                            conn_port_error = False
+                            if conn_port > 10:
+                                conn_port = math.floor(conn_port / 10)
+                            else:
+                                conn_port = 0
+
+                        elif not conn_addr_locked:
+                            conn_addr_error = False
+                            if len(conn_addr) > 0:
+                                conn_addr = conn_addr[:-1]
+                                if conn_addr[-1:] == ".":
+                                    conn_addr = conn_addr[:-1]
+
+                    elif event.dict["key"] == 46:
+                        if not conn_addr_locked:
+                            conn_addr_error = False
+                            addr_split = conn_addr.split(".")
+                            if len(addr_split) < 4 and len(addr_split[-1]) > 0:
+                                conn_addr += "."
 
                     else:
-                        if event.dict["unicode"].isnumeric() and local_port * 10 + int(event.dict["unicode"]) < 65535:
-                            local_port = local_port * 10 + int(event.dict["unicode"])
-                            port_error = False
-                        else:
-                            port_error = True
+                        if not local_port_locked:
+                            if event.dict["unicode"].isnumeric() and local_port * 10 + int(event.dict["unicode"]) < 65535:
+                                local_port = local_port * 10 + int(event.dict["unicode"])
+                                local_port_error = False
+                            else:
+                                local_port_error = True
+
+                        elif not conn_port_locked:
+                            if event.dict["unicode"].isnumeric() and conn_port * 10 + int(event.dict["unicode"]) < 65535:
+                                conn_port = conn_port * 10 + int(event.dict["unicode"])
+                                conn_port_error = False
+                            else:
+                                conn_port_error = True
+
+                        elif not conn_addr_locked:
+                            addr_split = conn_addr.split(".")
+                            if event.dict["unicode"].isnumeric() and len(conn_addr) < 15 and len(addr_split) < 5:
+                                if not len(addr_split) == 4 or not len(addr_split[-1]) == 3:
+                                    if len(addr_split[-1]) == 3:
+                                        conn_addr += "."
+                                    conn_addr += event.dict["unicode"]
+                                    conn_addr_error = False
+                                else:
+                                    conn_addr_error = True
+                            else:
+                                conn_addr_error = True
 
         # GAME LOGIC: PHASE SEPARATED
         # PHASE 0: CHOOSE HOST/JOIN
@@ -161,7 +227,7 @@ def main():
                     render_text("Enter port for UDP socket (confirm with enter): ", 0.1*SCREEN_W, 0.1*SCREEN_H, "l")
                     if local_port > 0:
                         render_text(f"{local_port}", 0.65 * SCREEN_W, 0.1 * SCREEN_H, "l")
-                    if port_error:
+                    if local_port_error:
                         render_text(f"Possible ports are in range 1024 - 65535", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l", colors.RED)
 
             # CLIENT CONN SETUP
@@ -170,8 +236,23 @@ def main():
                     render_text("Enter port for UDP socket (confirm with enter): ", 0.1 * SCREEN_W, 0.1 * SCREEN_H, "l")
                     if local_port > 0:
                         render_text(f"{local_port}", 0.65 * SCREEN_W, 0.1 * SCREEN_H, "l")
-                    if port_error:
+                    if local_port_error:
                         render_text(f"Possible ports are in range 1024 - 65535", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l", colors.RED)
+
+                elif not conn_port_locked:
+                    render_text("Enter host port (confirm with enter): ", 0.1 * SCREEN_W, 0.1 * SCREEN_H, "l")
+                    if conn_port > 0:
+                        render_text(f"{conn_port}", 0.52 * SCREEN_W, 0.1 * SCREEN_H, "l")
+                    if conn_port_error:
+                        render_text(f"Possible ports are in range 1024 - 65535", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l", colors.RED)
+
+                elif not conn_addr_locked:
+                    render_text("Enter host ip (confirm with enter): ", 0.1 * SCREEN_W, 0.1 * SCREEN_H, "l")
+                    if conn_addr:
+                        render_text(f"{conn_addr}", 0.5 * SCREEN_W, 0.1 * SCREEN_H, "l")
+                    if conn_addr_error:
+                        render_text(f"IP has to be like ###.###.###.###", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l", colors.RED)
+                        render_text(f"With each ### < 256", 0.1 * SCREEN_W, 0.3 * SCREEN_H, "l", colors.RED)
 
         # OUTPUT SCREEN IN 60 FPS
         pygame.display.flip()
