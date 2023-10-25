@@ -1,10 +1,10 @@
 # pip install pygame
-import math
 
+import math
 import pygame
 import socket
 import colors
-import connection_setup
+import threading
 
 
 # GLOBAL VARS
@@ -21,6 +21,9 @@ L_FONT = pygame.font.SysFont("Arial", 48)
 M_FONT = pygame.font.SysFont("Arial", 30)
 S_FONT = pygame.font.SysFont("Arial", 18)
 FPS = 60
+TRANSMISSION_DEBUG = True
+LAST_REC_DATA = None
+LAST_REC_ADDR = None
 
 
 # OBJECT CLASSES
@@ -96,13 +99,34 @@ def render_text(screen_text, screen_pos_x, screen_pos_y, size, font_color=colors
     SCREEN.blit(text_obj, (screen_pos_x, screen_pos_y))
 
 
+def conn_rec(t_socket):
+    global LAST_REC_DATA, LAST_REC_ADDR
+    t_data, LAST_REC_ADDR = t_socket.recvfrom(1024)
+    LAST_REC_DATA = t_data.decode("utf-8")
+    if TRANSMISSION_DEBUG: print(f"In: {LAST_REC_DATA}")
+
+
+def conn_send(t_socket, msg, t_endpoint):
+    t_socket.sendto(msg.encode("utf-8"), t_endpoint)
+    if TRANSMISSION_DEBUG: print(f"Out: {msg}")
+
+
 # MAIN LOOP
 def main():
+
+    #GLOBAL VARS
+    global LAST_REC_DATA, LAST_REC_ADDR
+
+    # SOCKET VARS
+    local_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    conn_socket = None
 
     # MAIN VARS
     running = True
     game_phase = 0
     host_mode = None
+
+    # PHASE 1 VARS
     local_port = 0
     local_port_locked = False
     local_port_error = False
@@ -112,6 +136,8 @@ def main():
     conn_addr_locked = False
     conn_port_error = False
     conn_addr_error = False
+    conn_started = False
+    conn_established = False
 
 
     # GAME LOOP
@@ -229,6 +255,19 @@ def main():
                         render_text(f"{local_port}", 0.65 * SCREEN_W, 0.1 * SCREEN_H, "l")
                     if local_port_error:
                         render_text(f"Possible ports are in range 1024 - 65535", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l", colors.RED)
+                elif not conn_established:
+                    if LAST_REC_DATA == "PyChessByNicoConnReq":
+                        LAST_REC_DATA = None
+                        conn_established = True
+                        conn_socket = LAST_REC_ADDR
+                        threading.Thread(target=conn_send, args=(local_socket, "PyChessByNicoConnAcc", conn_socket)).start()
+                        game_phase = 2
+                    if not conn_started:
+                        conn_started = True
+                        local_socket.bind(("", local_port))
+                        threading.Thread(target=conn_rec, args=(local_socket,)).start()
+                    render_text("Waiting for a connection...", SCREEN_W*0.33, SCREEN_H*0.1, "L")
+
 
             # CLIENT CONN SETUP
             else:
@@ -253,6 +292,25 @@ def main():
                     if conn_addr_error:
                         render_text(f"IP has to be like ###.###.###.###", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l", colors.RED)
                         render_text(f"With each ### < 256", 0.1 * SCREEN_W, 0.3 * SCREEN_H, "l", colors.RED)
+
+                elif not conn_established:
+                    if LAST_REC_DATA  == "PyChessByNicoConnAcc":
+                        LAST_REC_DATA = None
+                        conn_established = True
+                        conn_socket = LAST_REC_ADDR
+                        game_phase = 2
+                    if not conn_started:
+                        conn_started = True
+                        local_socket.bind(("", local_port))
+                        threading.Thread(target=conn_send, args=(local_socket, "PyChessByNicoConnReq", (conn_addr, conn_port))).start()
+                        threading.Thread(target=conn_rec, args=(local_socket,)).start()
+                    render_text("Establishing connection...", SCREEN_W * 0.33, SCREEN_H * 0.1, "L")
+
+
+        # PHASE 2: ...
+        if game_phase == 2:
+            render_text("Phase 2 reached", SCREEN_W*0.33, SCREEN_H*0.1, "L")
+
 
         # OUTPUT SCREEN IN 60 FPS
         pygame.display.flip()
