@@ -1,5 +1,7 @@
+# PACKAGES NEEDED:
 # pip install pygame
 
+# IMPORTS
 import math
 import pygame
 import socket
@@ -84,6 +86,7 @@ class Button:
 
 
 # FUNCTIONS
+# RENDER STRING TO SCREEN
 def render_text(screen_text, screen_pos_x, screen_pos_y, size, font_color=colors.WHITE):
     text_obj = None
 
@@ -99,6 +102,7 @@ def render_text(screen_text, screen_pos_x, screen_pos_y, size, font_color=colors
     SCREEN.blit(text_obj, (screen_pos_x, screen_pos_y))
 
 
+# THREADING RECEIVE AT SOCKET FROM ENDPOINT
 def conn_rec(t_socket):
     global LAST_REC_DATA, LAST_REC_ADDR
     t_data, LAST_REC_ADDR = t_socket.recvfrom(1024)
@@ -106,6 +110,7 @@ def conn_rec(t_socket):
     if TRANSMISSION_DEBUG: print(f"In: {LAST_REC_DATA}")
 
 
+# THREADING SEND FROM SOCKET TO ENDPOINT
 def conn_send(t_socket, msg, t_endpoint):
     t_socket.sendto(msg.encode("utf-8"), t_endpoint)
     if TRANSMISSION_DEBUG: print(f"Out: {msg}")
@@ -138,7 +143,6 @@ def main():
     conn_addr_error = False
     conn_started = False
     conn_established = False
-
 
     # GAME LOOP
     while running:
@@ -306,18 +310,17 @@ def main():
                         threading.Thread(target=conn_rec, args=(local_socket,)).start()
                     render_text("Establishing connection...", SCREEN_W * 0.33, SCREEN_H * 0.1, "L")
 
-
         # PHASE 2: ...
         if game_phase == 2:
             render_text("Phase 2 reached", SCREEN_W*0.33, SCREEN_H*0.1, "L")
-
 
         # OUTPUT SCREEN IN 60 FPS
         pygame.display.flip()
         CLOCK.tick(FPS)
 
+    # EXIT
     pygame.quit()
-
+    exit()
 
 if __name__ == "__main__":
     main()
