@@ -13,8 +13,8 @@ import threading
 pygame.init()
 pygame.font.init()
 DISPLAY_INFO = pygame.display.Info()
-SCREEN_W = DISPLAY_INFO.current_w*0.8
-SCREEN_H = DISPLAY_INFO.current_h*0.8
+SCREEN_W = 1536 # DISPLAY_INFO.current_w*0.8
+SCREEN_H = 864 # DISPLAY_INFO.current_h*0.8
 SCREEN = pygame.display.set_mode((SCREEN_W, SCREEN_H))
 pygame.display.set_caption("CHESS")
 CLOCK = pygame.time.Clock()
@@ -114,6 +114,43 @@ def conn_rec(t_socket):
 def conn_send(t_socket, msg, t_endpoint):
     t_socket.sendto(msg.encode("utf-8"), t_endpoint)
     if TRANSMISSION_DEBUG: print(f"Out: {msg}")
+
+
+# DRAW BOARD
+def draw_board(board_pos, board_square_size, board_base_color, board_square_color):
+    pygame.draw.rect(SCREEN, board_base_color, pygame.Rect(board_pos[0], board_pos[1], 8 * board_square_size, 8 * board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_pos[0], board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_pos[0], 2 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_pos[0], 4 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_pos[0], 6 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(2 * board_square_size + board_pos[0], board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(2 * board_square_size + board_pos[0], 2 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(2 * board_square_size + board_pos[0], 4 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(2 * board_square_size + board_pos[0], 6 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(4 * board_square_size + board_pos[0], board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(4 * board_square_size + board_pos[0], 2 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(4 * board_square_size + board_pos[0], 4 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(4 * board_square_size + board_pos[0], 6 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(6 * board_square_size + board_pos[0], board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(6 * board_square_size + board_pos[0], 2 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(6 * board_square_size + board_pos[0], 4 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(6 * board_square_size + board_pos[0], 6 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_square_size + board_pos[0], board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_square_size + board_pos[0], 3 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_square_size + board_pos[0], 5 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_square_size + board_pos[0], 7 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(3 * board_square_size + board_pos[0], board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(3 * board_square_size + board_pos[0], 3 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(3 * board_square_size + board_pos[0], 5 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(3 * board_square_size + board_pos[0], 7 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(5 * board_square_size + board_pos[0], board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(5 * board_square_size + board_pos[0], 3 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(5 * board_square_size + board_pos[0], 5 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(5 * board_square_size + board_pos[0], 7 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(7 * board_square_size + board_pos[0], board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(7 * board_square_size + board_pos[0], 3 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(7 * board_square_size + board_pos[0], 5 * board_square_size + board_pos[1], board_square_size, board_square_size))
+    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(7 * board_square_size + board_pos[0], 7 * board_square_size + board_pos[1], board_square_size, board_square_size))
 
 
 # MAIN LOOP
@@ -312,7 +349,7 @@ def main():
 
         # PHASE 2: ...
         if game_phase == 2:
-            render_text("Phase 2 reached", SCREEN_W*0.33, SCREEN_H*0.1, "L")
+            draw_board((368, 32), 100, colors.RED, colors.GREEN)
 
         # OUTPUT SCREEN IN 60 FPS
         pygame.display.flip()
