@@ -164,7 +164,7 @@ def init_board(board_pos, board_square_size, board_base_color, board_square_colo
 
 
 # CALC POSSIBLE MOVES
-def calc_possible_moves(board_mat, fig):
+def calc_possible_moves(board_mat, fig, is_white):
     clicked_fig = board_mat[fig[0]][fig[1]]
     posibs = []
 
@@ -192,7 +192,91 @@ def calc_possible_moves(board_mat, fig):
         if 7 > fig[0] and board_mat[fig[0] + 1][fig[1]- 1]:
             posibs.append([fig[0] + 1, fig[1] - 1])
 
-    # TODO: REST OF FIGS
+    # CASTLE
+    if clicked_fig == 2 or clicked_fig == 12:
+        # RIGHT
+        unobstructed = True
+        fields_out = 1
+        while unobstructed:
+            if 0 <= fig[0] + fields_out <= 7:
+                if board_mat[fig[0] + fields_out][fig[1]] == 0:
+                    posibs.append([fig[0] + fields_out, fig[1]])
+                elif (is_white and board_mat[fig[0] + fields_out][fig[1]] > 10) or (not is_white and board_mat[fig[0] + fields_out][fig[1]] < 10):
+                    posibs.append([fig[0] + fields_out, fig[1]])
+                    unobstructed = False
+                else:
+                    unobstructed = False
+            else:
+                unobstructed = False
+            fields_out += 1
+        # LEFT
+        unobstructed = True
+        fields_out = 1
+        while unobstructed:
+            if 0 <= fig[0] - fields_out <= 7:
+                if board_mat[fig[0] - fields_out][fig[1]] == 0:
+                    posibs.append([fig[0] - fields_out, fig[1]])
+                elif (is_white and board_mat[fig[0] - fields_out][fig[1]] > 10) or (
+                        not is_white and board_mat[fig[0] - fields_out][fig[1]] < 10):
+                    posibs.append([fig[0] - fields_out, fig[1]])
+                    unobstructed = False
+                else:
+                    unobstructed = False
+            else:
+                unobstructed = False
+            fields_out += 1
+        # UP
+        unobstructed = True
+        fields_out = 1
+        while unobstructed:
+            if 0 <= fig[1] + fields_out <= 7:
+                if board_mat[fig[0]][fig[1] + fields_out] == 0:
+                    posibs.append([fig[0], fig[1] + fields_out])
+                elif (is_white and board_mat[fig[0]][fig[1] + fields_out] > 10) or (
+                        not is_white and board_mat[fig[0]][fig[1] + fields_out] < 10):
+                    posibs.append([fig[0], fig[1] + fields_out])
+                    unobstructed = False
+                else:
+                    unobstructed = False
+            else:
+                unobstructed = False
+            fields_out += 1
+        # DOWN
+        unobstructed = True
+        fields_out = 1
+        while unobstructed:
+            if 0 <= fig[1] - fields_out <= 7:
+                if board_mat[fig[0]][fig[1] - fields_out] == 0:
+                    posibs.append([fig[0], fig[1] - fields_out])
+                elif (is_white and board_mat[fig[0]][fig[1] - fields_out] > 10) or (
+                        not is_white and board_mat[fig[0]][fig[1] - fields_out] < 10):
+                    posibs.append([fig[0], fig[1] - fields_out])
+                    unobstructed = False
+                else:
+                    unobstructed = False
+            else:
+                unobstructed = False
+            fields_out += 1
+
+    # HORSE
+    if clicked_fig == 3 or clicked_fig == 13:
+        for i, j in [[-1, 2], [1, 2], [2, -1], [2, 1], [-1, -2], [1, -2], [-2, -1], [-2, 1]]:
+            if 0 <= fig[0] + i <= 7 and 0 <= fig[1] + j <= 7:
+                print(f"possible field: {fig[0] + i}, {fig[1] + j}")
+                if (is_white and board_mat[fig[0] + i][fig[1] + j] > 10) or (not is_white and board_mat[fig[0] + i][fig[1] + j] < 10) or board_mat[fig[0] + i][fig[1] + j] == 0:
+                    posibs.append([fig[0] + i, fig[1] + j])
+
+    # SNIPER
+    if clicked_fig == 4 or clicked_fig == 14:
+        pass
+
+    # KING
+    if clicked_fig == 5 or clicked_fig == 15:
+        pass
+
+    # QUEEN
+    if clicked_fig == 6 or clicked_fig == 16:
+        pass
 
     return posibs
 
@@ -220,11 +304,11 @@ def draw_board(board_m, board_tm, board_pos, board_square_size, playing_as_white
             else:
                 if playing_as_white and 0 < board_m[new_click[0]][new_click[1]] < 10 or not playing_as_white and 10 < board_m[new_click[0]][new_click[1]]:
                     CLICKED_TILE = new_click
-                    POSSIBLE_MOVES = calc_possible_moves(board_m, new_click)
+                    POSSIBLE_MOVES = calc_possible_moves(board_m, new_click, playing_as_white)
         else:
             if playing_as_white and 0 < board_m[new_click[0]][new_click[1]] < 10 or not playing_as_white and 10 < board_m[new_click[0]][new_click[1]]:
                 CLICKED_TILE = new_click
-                POSSIBLE_MOVES = calc_possible_moves(board_m, new_click)
+                POSSIBLE_MOVES = calc_possible_moves(board_m, new_click, playing_as_white)
 
     if CLICKED_TILE:
         BoardTile((CLICKED_TILE[0] * board_square_size + board_pos[0],
