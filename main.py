@@ -90,7 +90,7 @@ class Button:
 
 
 # BOARD TILE
-class board_tile:
+class BoardTile:
     def __init__(self, tile_pos, tile_size, tile_color):
         self.pos_x = tile_pos[0]
         self.pox_y = tile_pos[1]
@@ -99,15 +99,25 @@ class board_tile:
         self.rect = pygame.Rect(self.pos_x, self.pox_y, self.size, self.size)
         self.clicked = False
 
-    def draw(self, action  = False):
+    def draw(self):
         pygame.draw.rect(SCREEN, self.color, self.rect)
         if self.rect.collidepoint(pygame.mouse.get_pos()):
-            if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
-                self.clicked = True
-                action = True
-        if pygame.mouse.get_pressed()[0] == 0:
+            if pygame.mouse.get_pressed()[0] == 1:
+                if not self.clicked:
+                    self.clicked = True
+                    return False
+            else:
+                if self.clicked:
+                    self.clicked = False
+                    return True
+                else:
+                    return False
+        else:
             self.clicked = False
-        return action
+            return False
+
+    def sketch(self):
+        pygame.draw.rect(SCREEN, self.color, self.rect)
 
 
 # FUNCTIONS
@@ -141,34 +151,93 @@ def conn_send(t_socket, msg, t_endpoint):
     if TRANSMISSION_DEBUG: print(f"Out: {msg}")
 
 
+# INIT BOARD
+def init_board(board_pos, board_square_size, board_base_color, board_square_color):
+    board_tile_matrix = [[None for i in range(8)] for j in range(8)]
+    for i in range(len(board_tile_matrix)):
+        for j in range(len(board_tile_matrix[i])):
+            if (i % 2 == 0) == (j % 2 == 1):
+                board_tile_matrix[i][j] = BoardTile((i * board_square_size + board_pos[0], (7 - j) * board_square_size + board_pos[1]), board_square_size, board_base_color)
+            else:
+                board_tile_matrix[i][j] = BoardTile((i * board_square_size + board_pos[0], (7 - j) * board_square_size + board_pos[1]), board_square_size, board_square_color)
+    return board_tile_matrix
+
+
+# CALC POSSIBLE MOVES
+def calc_possible_moves(board_mat, fig):
+    clicked_fig = board_mat[fig[0]][fig[1]]
+    posibs = []
+
+    # WHITE PAWN
+    if clicked_fig == 1:
+        # TILE IN FRONT IS EMPTY
+        if board_mat[fig[0]][fig[1] + 1] == 0:
+            posibs.append([fig[0], fig[1] + 1])
+            if fig[1] == 1:
+                posibs.append([fig[0], fig[1] + 2])
+        if 0 < fig[0] and board_mat[fig[0] - 1][fig[1] + 1]:
+            posibs.append([fig[0] - 1, fig[1] + 1])
+        if 7 > fig[0] and board_mat[fig[0] + 1][fig[1] + 1]:
+            posibs.append([fig[0] + 1, fig[1] + 1])
+
+    # BLACK PAWN
+    if clicked_fig == 11:
+        # TILE IN FRONT IS EMPTY
+        if board_mat[fig[0]][fig[1] - 1] == 0:
+            posibs.append([fig[0], fig[1] - 1])
+            if fig[1] == 6:
+                posibs.append([fig[0], fig[1] - 2])
+        if 0 < fig[0] and board_mat[fig[0] - 1][fig[1] - 1]:
+            posibs.append([fig[0] - 1, fig[1] - 1])
+        if 7 > fig[0] and board_mat[fig[0] + 1][fig[1]- 1]:
+            posibs.append([fig[0] + 1, fig[1] - 1])
+
+    # TODO: REST OF FIGS
+
+    return posibs
+
 # DRAW BOARD
-def draw_board(board_m, board_pos, board_square_size, board_base_color, board_square_color):
-    global CLICKED_TILE
+def draw_board(board_m, board_tm, board_pos, board_square_size, playing_as_white):
+    global CLICKED_TILE, POSSIBLE_MOVES
     new_click = None
-    for i in range(len(board_m)):
-        for j in range(len(board_m[i])):
-            if (i % 2 == 0) == (j % 2 == 0):
-                if board_tile(((7 - i) * board_square_size + board_pos[0], (7 - j) * board_square_size +
-                               board_pos[1]), board_square_size, board_base_color).draw():
-                    new_click = (i, j)
-            else:
-                if board_tile(((7 - i) * board_square_size + board_pos[0], (7 - j) * board_square_size +
-                               board_pos[1]), board_square_size, board_square_color).draw():
-                    new_click = (i, j)
-
-            # NORMALLY DRAW CLICK TILE
-            if CLICKED_TILE is not None:
-                if new_click is not None and new_click == CLICKED_TILE:
-                    board_tile(((7 - CLICKED_TILE[0]) * board_square_size + board_pos[0], (7 - CLICKED_TILE[1]) * board_square_size +
-                                board_pos[1]), board_square_size, colors.GREEN)
-
-            else:
-                CLICKED_TILE = new_click
+    for i in range(len(board_tm)):
+        for j in range(len(board_tm[i])):
+            if board_tm[i][j].draw():
+                new_click = (i, j)
 
             if board_m[i][j] > 0:
-                tile_text = L_FONT.render(str(board_m[i][j]), True, colors.RED)
-                SCREEN.blit(tile_text, ((7 - i) * board_square_size + board_pos[0] + board_square_size * 0.25,
-                                        (7 - j) * board_square_size + board_pos[1] + board_square_size * 0.2))
+                tile_text = L_FONT.render(str(board_m[i][j]), True, colors.BLACK)
+                SCREEN.blit(tile_text, (i * board_square_size + board_pos[0] + board_square_size * 0.25, (7 - j) * board_square_size + board_pos[1] + board_square_size * 0.2))
+
+    if new_click:
+        if CLICKED_TILE:
+            if new_click == CLICKED_TILE:
+                CLICKED_TILE = None
+                POSSIBLE_MOVES = []
+            elif new_click in POSSIBLE_MOVES:
+                pass
+                # TODO: DO MOVE
+            else:
+                if playing_as_white and 0 < board_m[new_click[0]][new_click[1]] < 10 or not playing_as_white and 10 < board_m[new_click[0]][new_click[1]]:
+                    CLICKED_TILE = new_click
+                    POSSIBLE_MOVES = calc_possible_moves(board_m, new_click)
+        else:
+            if playing_as_white and 0 < board_m[new_click[0]][new_click[1]] < 10 or not playing_as_white and 10 < board_m[new_click[0]][new_click[1]]:
+                CLICKED_TILE = new_click
+                POSSIBLE_MOVES = calc_possible_moves(board_m, new_click)
+
+    if CLICKED_TILE:
+        BoardTile((CLICKED_TILE[0] * board_square_size + board_pos[0],
+                   (7 - CLICKED_TILE[1]) * board_square_size + board_pos[1]), board_square_size, colors.GREEN).sketch()
+        tile_text = L_FONT.render(str(board_m[CLICKED_TILE[0]][CLICKED_TILE[1]]), True, colors.BLACK)
+        SCREEN.blit(tile_text, (CLICKED_TILE[0] * board_square_size + board_pos[0] + board_square_size * 0.25,
+                                (7 - CLICKED_TILE[1]) * board_square_size + board_pos[1] + board_square_size * 0.2))
+
+        for tile in POSSIBLE_MOVES:
+            BoardTile((tile[0] * board_square_size + board_pos[0], (7 - tile[1]) * board_square_size + board_pos[1]), board_square_size, colors.RED).sketch()
+            if board_m[tile[0]][tile[1]] > 0:
+                tile_text = L_FONT.render(str(board_m[tile[0]][tile[1]]), True, colors.BLACK)
+                SCREEN.blit(tile_text, (tile[0] * board_square_size + board_pos[0] + board_square_size * 0.25, (7 - tile[1]) * board_square_size + board_pos[1] + board_square_size * 0.2))
 
 
 # MAIN LOOP
@@ -201,6 +270,9 @@ def main():
 
     # PHASE 2 VARS
     board_matrix = [[0 for i in range(8)] for j in range(8)]
+    board_tile_matrix = None
+    board_tile_matrix_generated = False
+    playing_as_white = True
     # TILE CODINGS:
     # 0: empty tile
     # 1: white pawn
@@ -238,7 +310,6 @@ def main():
     board_matrix[5][7] = 14
     board_matrix[6][7] = 13
     board_matrix[7][7] = 12
-
 
     # GAME LOOP
     while running:
@@ -408,7 +479,12 @@ def main():
 
         # PHASE 2: ...
         if game_phase == 2 or GAME_DEBUG:
-            draw_board(board_matrix,(368, 32), 100, colors.WHITE, colors.DARK_BLUE)
+            # GENERATE BOARD TILES
+            if not board_tile_matrix_generated:
+                board_tile_matrix = init_board((368, 32), 100, colors.WHITE, colors.DARK_BLUE)
+                board_tile_matrix_generated = True
+
+            draw_board(board_matrix,board_tile_matrix, (368, 32), 100, playing_as_white)
 
         # OUTPUT SCREEN IN 60 FPS
         pygame.display.flip()
