@@ -23,12 +23,16 @@ L_FONT = pygame.font.SysFont("Arial", 48)
 M_FONT = pygame.font.SysFont("Arial", 30)
 S_FONT = pygame.font.SysFont("Arial", 18)
 FPS = 60
+GAME_DEBUG = True
 TRANSMISSION_DEBUG = True
 LAST_REC_DATA = None
 LAST_REC_ADDR = None
+CLICKED_TILE = None
+POSSIBLE_MOVES = []
 
 
 # OBJECT CLASSES
+# SIMPLE BORDER BUTTON
 class Button:
     def __init__(self, pos_x, pos_y, width, height, b_text = "", font_color=colors.WHITE, border_color=colors.WHITE,
                  border=0, border_radius=-1):
@@ -51,8 +55,8 @@ class Button:
         pygame.draw.rect(SCREEN, self.border_color, self.rect, self.border, self.border_radius)
 
         b_text_obj = None
-        center_height_offset = 0
         w_char_s = 0
+        center_height_offset = 0
 
         if self.h < 40:
             b_text_obj = S_FONT.render(self.b_text, True, self.font_color)
@@ -77,6 +81,27 @@ class Button:
         SCREEN.blit(b_text_obj, (self.x + self.w/2 - self.b_text_len*w_char_s/2.66, self.y + self.h/2 -
                                  center_height_offset))
         if self.rect.collidepoint(pos):
+            if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
+                self.clicked = True
+                action = True
+        if pygame.mouse.get_pressed()[0] == 0:
+            self.clicked = False
+        return action
+
+
+# BOARD TILE
+class board_tile:
+    def __init__(self, tile_pos, tile_size, tile_color):
+        self.pos_x = tile_pos[0]
+        self.pox_y = tile_pos[1]
+        self.size = tile_size
+        self.color = tile_color
+        self.rect = pygame.Rect(self.pos_x, self.pox_y, self.size, self.size)
+        self.clicked = False
+
+    def draw(self, action  = False):
+        pygame.draw.rect(SCREEN, self.color, self.rect)
+        if self.rect.collidepoint(pygame.mouse.get_pos()):
             if pygame.mouse.get_pressed()[0] == 1 and not self.clicked:
                 self.clicked = True
                 action = True
@@ -117,40 +142,33 @@ def conn_send(t_socket, msg, t_endpoint):
 
 
 # DRAW BOARD
-def draw_board(board_pos, board_square_size, board_base_color, board_square_color):
-    pygame.draw.rect(SCREEN, board_base_color, pygame.Rect(board_pos[0], board_pos[1], 8 * board_square_size, 8 * board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_pos[0], board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_pos[0], 2 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_pos[0], 4 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_pos[0], 6 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(2 * board_square_size + board_pos[0], board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(2 * board_square_size + board_pos[0], 2 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(2 * board_square_size + board_pos[0], 4 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(2 * board_square_size + board_pos[0], 6 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(4 * board_square_size + board_pos[0], board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(4 * board_square_size + board_pos[0], 2 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(4 * board_square_size + board_pos[0], 4 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(4 * board_square_size + board_pos[0], 6 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(6 * board_square_size + board_pos[0], board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(6 * board_square_size + board_pos[0], 2 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(6 * board_square_size + board_pos[0], 4 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(6 * board_square_size + board_pos[0], 6 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_square_size + board_pos[0], board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_square_size + board_pos[0], 3 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_square_size + board_pos[0], 5 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(board_square_size + board_pos[0], 7 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(3 * board_square_size + board_pos[0], board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(3 * board_square_size + board_pos[0], 3 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(3 * board_square_size + board_pos[0], 5 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(3 * board_square_size + board_pos[0], 7 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(5 * board_square_size + board_pos[0], board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(5 * board_square_size + board_pos[0], 3 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(5 * board_square_size + board_pos[0], 5 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(5 * board_square_size + board_pos[0], 7 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(7 * board_square_size + board_pos[0], board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(7 * board_square_size + board_pos[0], 3 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(7 * board_square_size + board_pos[0], 5 * board_square_size + board_pos[1], board_square_size, board_square_size))
-    pygame.draw.rect(SCREEN, board_square_color, pygame.Rect(7 * board_square_size + board_pos[0], 7 * board_square_size + board_pos[1], board_square_size, board_square_size))
+def draw_board(board_m, board_pos, board_square_size, board_base_color, board_square_color):
+    global CLICKED_TILE
+    new_click = None
+    for i in range(len(board_m)):
+        for j in range(len(board_m[i])):
+            if (i % 2 == 0) == (j % 2 == 0):
+                if board_tile(((7 - i) * board_square_size + board_pos[0], (7 - j) * board_square_size +
+                               board_pos[1]), board_square_size, board_base_color).draw():
+                    new_click = (i, j)
+            else:
+                if board_tile(((7 - i) * board_square_size + board_pos[0], (7 - j) * board_square_size +
+                               board_pos[1]), board_square_size, board_square_color).draw():
+                    new_click = (i, j)
+
+            # NORMALLY DRAW CLICK TILE
+            if CLICKED_TILE is not None:
+                if new_click is not None and new_click == CLICKED_TILE:
+                    board_tile(((7 - CLICKED_TILE[0]) * board_square_size + board_pos[0], (7 - CLICKED_TILE[1]) * board_square_size +
+                                board_pos[1]), board_square_size, colors.GREEN)
+
+            else:
+                CLICKED_TILE = new_click
+
+            if board_m[i][j] > 0:
+                tile_text = L_FONT.render(str(board_m[i][j]), True, colors.RED)
+                SCREEN.blit(tile_text, ((7 - i) * board_square_size + board_pos[0] + board_square_size * 0.25,
+                                        (7 - j) * board_square_size + board_pos[1] + board_square_size * 0.2))
 
 
 # MAIN LOOP
@@ -180,6 +198,47 @@ def main():
     conn_addr_error = False
     conn_started = False
     conn_established = False
+
+    # PHASE 2 VARS
+    board_matrix = [[0 for i in range(8)] for j in range(8)]
+    # TILE CODINGS:
+    # 0: empty tile
+    # 1: white pawn
+    # 2: white castle   7|    BLACK
+    # 3: white horse     |
+    # 4: white sniper    |
+    # 5: white king      |
+    # 6: white queen     |
+    # 11: black pawn     |
+    # 12: black castle   |    WHITE
+    # 13: black horse   0|_ _ _ _ _ _ _ _
+    # 14: black sniper    0             7
+    # 15: black king
+    # 16: black queen
+
+    # PAWNS
+    for i in range(8):
+        board_matrix[i][1] = 1
+        board_matrix[i][6] = 11
+
+    # OTHER FIGURES
+    board_matrix[0][0] = 2
+    board_matrix[1][0] = 3
+    board_matrix[2][0] = 4
+    board_matrix[3][0] = 5
+    board_matrix[4][0] = 6
+    board_matrix[5][0] = 4
+    board_matrix[6][0] = 3
+    board_matrix[7][0] = 2
+    board_matrix[0][7] = 12
+    board_matrix[1][7] = 13
+    board_matrix[2][7] = 14
+    board_matrix[3][7] = 15
+    board_matrix[4][7] = 16
+    board_matrix[5][7] = 14
+    board_matrix[6][7] = 13
+    board_matrix[7][7] = 12
+
 
     # GAME LOOP
     while running:
@@ -272,7 +331,7 @@ def main():
 
         # GAME LOGIC: PHASE SEPARATED
         # PHASE 0: CHOOSE HOST/JOIN
-        if game_phase == 0:
+        if game_phase == 0 and not GAME_DEBUG:
 
             host_btn = Button(SCREEN_W*0.25, SCREEN_H*0.2, SCREEN_W*0.25, SCREEN_H*0.6, "HOST", colors.WHITE, colors.WHITE, 2)
             join_btn = Button(SCREEN_W*0.55, SCREEN_H*0.2, SCREEN_W*0.25, SCREEN_H*0.6, "JOIN", colors.WHITE, colors.WHITE, 2)
@@ -287,7 +346,7 @@ def main():
                 game_phase = 1
 
         # PHASE 1: UDP CONN SETUP
-        if game_phase == 1:
+        if game_phase == 1 and not GAME_DEBUG:
             # HOST CONN SETUP
             if host_mode:
                 if not local_port_locked:
@@ -348,8 +407,8 @@ def main():
                     render_text("Establishing connection...", SCREEN_W * 0.33, SCREEN_H * 0.1, "L")
 
         # PHASE 2: ...
-        if game_phase == 2:
-            draw_board((368, 32), 100, colors.RED, colors.GREEN)
+        if game_phase == 2 or GAME_DEBUG:
+            draw_board(board_matrix,(368, 32), 100, colors.WHITE, colors.DARK_BLUE)
 
         # OUTPUT SCREEN IN 60 FPS
         pygame.display.flip()
