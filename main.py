@@ -2,11 +2,14 @@
 # pip install pygame
 
 # IMPORTS
-import math
 import pygame
 import socket
 import colors
-import threading
+import figure
+
+from math import floor
+from board import initialize_board
+from threading import Thread
 
 
 # GLOBAL VARS
@@ -164,316 +167,39 @@ def init_board(board_pos, board_square_size, board_base_color, board_square_colo
 
 
 # CALC POSSIBLE MOVES
-def calc_possible_moves(board_mat, fig, is_white):
-    clicked_fig = board_mat[fig[0]][fig[1]]
-    posibs = []
+def calc_possible_moves(bm, fp, iw):
+    clicked_fig = bm[fp[0]][fp[1]]
+    pm = []
 
     # WHITE PAWN
     if clicked_fig == 1:
-        # TILE IN FRONT IS EMPTY
-        if board_mat[fig[0]][fig[1] + 1] == 0:
-            posibs.append([fig[0], fig[1] + 1])
-            if fig[1] == 1:
-                posibs.append([fig[0], fig[1] + 2])
-        if 0 < fig[0] and board_mat[fig[0] - 1][fig[1] + 1]:
-            posibs.append([fig[0] - 1, fig[1] + 1])
-        if 7 > fig[0] and board_mat[fig[0] + 1][fig[1] + 1]:
-            posibs.append([fig[0] + 1, fig[1] + 1])
+        pm += figure.pawn_moves(bm, fp, iw)
 
     # BLACK PAWN
     if clicked_fig == 11:
-        # TILE IN FRONT IS EMPTY
-        if board_mat[fig[0]][fig[1] - 1] == 0:
-            posibs.append([fig[0], fig[1] - 1])
-            if fig[1] == 6:
-                posibs.append([fig[0], fig[1] - 2])
-        if 0 < fig[0] and board_mat[fig[0] - 1][fig[1] - 1]:
-            posibs.append([fig[0] - 1, fig[1] - 1])
-        if 7 > fig[0] and board_mat[fig[0] + 1][fig[1]- 1]:
-            posibs.append([fig[0] + 1, fig[1] - 1])
+        pm += figure.pawn_moves(bm, fp, iw)
 
     # CASTLE
     if clicked_fig == 2 or clicked_fig == 12:
-        # RIGHT
-        unobstructed = True
-        fields_out = 1
-        while unobstructed:
-            if 0 <= fig[0] + fields_out <= 7:
-                if board_mat[fig[0] + fields_out][fig[1]] == 0:
-                    posibs.append([fig[0] + fields_out, fig[1]])
-                elif (is_white and board_mat[fig[0] + fields_out][fig[1]] > 10) or (not is_white and board_mat[fig[0] + fields_out][fig[1]] < 10):
-                    posibs.append([fig[0] + fields_out, fig[1]])
-                    unobstructed = False
-                else:
-                    unobstructed = False
-            else:
-                unobstructed = False
-            fields_out += 1
-        # LEFT
-        unobstructed = True
-        fields_out = 1
-        while unobstructed:
-            if 0 <= fig[0] - fields_out <= 7:
-                if board_mat[fig[0] - fields_out][fig[1]] == 0:
-                    posibs.append([fig[0] - fields_out, fig[1]])
-                elif (is_white and board_mat[fig[0] - fields_out][fig[1]] > 10) or (
-                        not is_white and board_mat[fig[0] - fields_out][fig[1]] < 10):
-                    posibs.append([fig[0] - fields_out, fig[1]])
-                    unobstructed = False
-                else:
-                    unobstructed = False
-            else:
-                unobstructed = False
-            fields_out += 1
-        # UP
-        unobstructed = True
-        fields_out = 1
-        while unobstructed:
-            if 0 <= fig[1] + fields_out <= 7:
-                if board_mat[fig[0]][fig[1] + fields_out] == 0:
-                    posibs.append([fig[0], fig[1] + fields_out])
-                elif (is_white and board_mat[fig[0]][fig[1] + fields_out] > 10) or (
-                        not is_white and board_mat[fig[0]][fig[1] + fields_out] < 10):
-                    posibs.append([fig[0], fig[1] + fields_out])
-                    unobstructed = False
-                else:
-                    unobstructed = False
-            else:
-                unobstructed = False
-            fields_out += 1
-        # DOWN
-        unobstructed = True
-        fields_out = 1
-        while unobstructed:
-            if 0 <= fig[1] - fields_out <= 7:
-                if board_mat[fig[0]][fig[1] - fields_out] == 0:
-                    posibs.append([fig[0], fig[1] - fields_out])
-                elif (is_white and board_mat[fig[0]][fig[1] - fields_out] > 10) or (
-                        not is_white and board_mat[fig[0]][fig[1] - fields_out] < 10):
-                    posibs.append([fig[0], fig[1] - fields_out])
-                    unobstructed = False
-                else:
-                    unobstructed = False
-            else:
-                unobstructed = False
-            fields_out += 1
+        pm += figure.rook_moves(bm, fp, iw)
 
     # HORSE
     if clicked_fig == 3 or clicked_fig == 13:
-        for i, j in [[-1, 2], [1, 2], [2, -1], [2, 1], [-1, -2], [1, -2], [-2, -1], [-2, 1]]:
-            if 0 <= fig[0] + i <= 7 and 0 <= fig[1] + j <= 7:
-                print(f"possible field: {fig[0] + i}, {fig[1] + j}")
-                if (is_white and board_mat[fig[0] + i][fig[1] + j] > 10) or (not is_white and board_mat[fig[0] + i][fig[1] + j] < 10) or board_mat[fig[0] + i][fig[1] + j] == 0:
-                    posibs.append([fig[0] + i, fig[1] + j])
+        pm += figure.knight_moves(bm, fp, iw)
 
     # SNIPER
     if clicked_fig == 4 or clicked_fig == 14:
-        # ++
-        unobstructed = True
-        fields_out = 1
-        while unobstructed:
-            if 0 <= fig[0] + fields_out <= 7 and 0 <= fig[1] + fields_out <= 7:
-                if board_mat[fig[0] + fields_out][fig[1] + fields_out] == 0:
-                    posibs.append([fig[0] + fields_out, fig[1] + fields_out])
-                elif (is_white and board_mat[fig[0] + fields_out][fig[1] + fields_out] > 10) or (
-                        not is_white and board_mat[fig[0] + fields_out][fig[1] + fields_out] < 10):
-                    posibs.append([fig[0] + fields_out, fig[1] + fields_out])
-                    unobstructed = False
-                else:
-                    unobstructed = False
-            else:
-                unobstructed = False
-            fields_out += 1
-        # -+
-        unobstructed = True
-        fields_out = 1
-        while unobstructed:
-            if 0 <= fig[0] - fields_out <= 7 and 0 <= fig[1] + fields_out <= 7:
-                if board_mat[fig[0] - fields_out][fig[1] + fields_out] == 0:
-                    posibs.append([fig[0] - fields_out, fig[1] + fields_out])
-                elif (is_white and board_mat[fig[0] - fields_out][fig[1] + fields_out] > 10) or (
-                        not is_white and board_mat[fig[0] - fields_out][fig[1] + fields_out] < 10):
-                    posibs.append([fig[0] - fields_out, fig[1] + fields_out])
-                    unobstructed = False
-                else:
-                    unobstructed = False
-            else:
-                unobstructed = False
-            fields_out += 1
-        # +-
-        unobstructed = True
-        fields_out = 1
-        while unobstructed:
-            if 0 <= fig[0] + fields_out <= 7 and 0 <= fig[1] - fields_out <= 7:
-                if board_mat[fig[0] + fields_out][fig[1] - fields_out] == 0:
-                    posibs.append([fig[0] + fields_out, fig[1] - fields_out])
-                elif (is_white and board_mat[fig[0] + fields_out][fig[1] - fields_out] > 10) or (
-                        not is_white and board_mat[fig[0] + fields_out][fig[1] - fields_out] < 10):
-                    posibs.append([fig[0] + fields_out, fig[1] - fields_out])
-                    unobstructed = False
-                else:
-                    unobstructed = False
-            else:
-                unobstructed = False
-            fields_out += 1
-        # --
-        unobstructed = True
-        fields_out = 1
-        while unobstructed:
-            if 0 <= fig[0] - fields_out <= 7 and 0 <= fig[1] - fields_out <= 7:
-                if board_mat[fig[0] - fields_out ][fig[1] - fields_out] == 0:
-                    posibs.append([fig[0] - fields_out , fig[1] - fields_out])
-                elif (is_white and board_mat[fig[0] - fields_out ][fig[1] - fields_out] > 10) or (
-                        not is_white and board_mat[fig[0] - fields_out ][fig[1] - fields_out] < 10):
-                    posibs.append([fig[0] - fields_out , fig[1] - fields_out])
-                    unobstructed = False
-                else:
-                    unobstructed = False
-            else:
-                unobstructed = False
-            fields_out += 1
+        pm += figure.bishop_moves(bm, fp, iw)
 
     # KING
     if clicked_fig == 5 or clicked_fig == 15:
-        for i, j in [[-1, 1], [0, 1], [1, 1], [-1, 0], [1, 0], [-1, -1], [0, -1], [1, -1]]:
-            if 0 <= fig[0] + i <= 7 and 0 <= fig[1] + j <= 7:
-                if board_mat[fig[0] + i][fig[1] + j] == 0:
-                    posibs.append([fig[0] + i, fig[1] + j])
-                elif (is_white and board_mat[fig[0] + i][fig[1] + j] > 10) or (not is_white and board_mat[fig[0] + i][fig[1] + j] < 10):
-                    posibs.append([fig[0] + i, fig[1] + j])
+        pm += figure.king_moves(bm, fp, iw)
 
     # QUEEN
     if clicked_fig == 6 or clicked_fig == 16:
-        # RIGHT
-        unobstructed = True
-        fields_out = 1
-        while unobstructed:
-            if 0 <= fig[0] + fields_out <= 7:
-                if board_mat[fig[0] + fields_out][fig[1]] == 0:
-                    posibs.append([fig[0] + fields_out, fig[1]])
-                elif (is_white and board_mat[fig[0] + fields_out][fig[1]] > 10) or (
-                        not is_white and board_mat[fig[0] + fields_out][fig[1]] < 10):
-                    posibs.append([fig[0] + fields_out, fig[1]])
-                    unobstructed = False
-                else:
-                    unobstructed = False
-            else:
-                unobstructed = False
-            fields_out += 1
-        # LEFT
-        unobstructed = True
-        fields_out = 1
-        while unobstructed:
-            if 0 <= fig[0] - fields_out <= 7:
-                if board_mat[fig[0] - fields_out][fig[1]] == 0:
-                    posibs.append([fig[0] - fields_out, fig[1]])
-                elif (is_white and board_mat[fig[0] - fields_out][fig[1]] > 10) or (
-                        not is_white and board_mat[fig[0] - fields_out][fig[1]] < 10):
-                    posibs.append([fig[0] - fields_out, fig[1]])
-                    unobstructed = False
-                else:
-                    unobstructed = False
-            else:
-                unobstructed = False
-            fields_out += 1
-        # UP
-        unobstructed = True
-        fields_out = 1
-        while unobstructed:
-            if 0 <= fig[1] + fields_out <= 7:
-                if board_mat[fig[0]][fig[1] + fields_out] == 0:
-                    posibs.append([fig[0], fig[1] + fields_out])
-                elif (is_white and board_mat[fig[0]][fig[1] + fields_out] > 10) or (
-                        not is_white and board_mat[fig[0]][fig[1] + fields_out] < 10):
-                    posibs.append([fig[0], fig[1] + fields_out])
-                    unobstructed = False
-                else:
-                    unobstructed = False
-            else:
-                unobstructed = False
-            fields_out += 1
-        # DOWN
-        unobstructed = True
-        fields_out = 1
-        while unobstructed:
-            if 0 <= fig[1] - fields_out <= 7:
-                if board_mat[fig[0]][fig[1] - fields_out] == 0:
-                    posibs.append([fig[0], fig[1] - fields_out])
-                elif (is_white and board_mat[fig[0]][fig[1] - fields_out] > 10) or (
-                        not is_white and board_mat[fig[0]][fig[1] - fields_out] < 10):
-                    posibs.append([fig[0], fig[1] - fields_out])
-                    unobstructed = False
-                else:
-                    unobstructed = False
-            else:
-                unobstructed = False
-            fields_out += 1
-            # ++
-            unobstructed = True
-            fields_out = 1
-            while unobstructed:
-                if 0 <= fig[0] + fields_out <= 7 and 0 <= fig[1] + fields_out <= 7:
-                    if board_mat[fig[0] + fields_out][fig[1] + fields_out] == 0:
-                        posibs.append([fig[0] + fields_out, fig[1] + fields_out])
-                    elif (is_white and board_mat[fig[0] + fields_out][fig[1] + fields_out] > 10) or (
-                            not is_white and board_mat[fig[0] + fields_out][fig[1] + fields_out] < 10):
-                        posibs.append([fig[0] + fields_out, fig[1] + fields_out])
-                        unobstructed = False
-                    else:
-                        unobstructed = False
-                else:
-                    unobstructed = False
-                fields_out += 1
-            # -+
-            unobstructed = True
-            fields_out = 1
-            while unobstructed:
-                if 0 <= fig[0] - fields_out <= 7 and 0 <= fig[1] + fields_out <= 7:
-                    if board_mat[fig[0] - fields_out][fig[1] + fields_out] == 0:
-                        posibs.append([fig[0] - fields_out, fig[1] + fields_out])
-                    elif (is_white and board_mat[fig[0] - fields_out][fig[1] + fields_out] > 10) or (
-                            not is_white and board_mat[fig[0] - fields_out][fig[1] + fields_out] < 10):
-                        posibs.append([fig[0] - fields_out, fig[1] + fields_out])
-                        unobstructed = False
-                    else:
-                        unobstructed = False
-                else:
-                    unobstructed = False
-                fields_out += 1
-            # +-
-            unobstructed = True
-            fields_out = 1
-            while unobstructed:
-                if 0 <= fig[0] + fields_out <= 7 and 0 <= fig[1] - fields_out <= 7:
-                    if board_mat[fig[0] + fields_out][fig[1] - fields_out] == 0:
-                        posibs.append([fig[0] + fields_out, fig[1] - fields_out])
-                    elif (is_white and board_mat[fig[0] + fields_out][fig[1] - fields_out] > 10) or (
-                            not is_white and board_mat[fig[0] + fields_out][fig[1] - fields_out] < 10):
-                        posibs.append([fig[0] + fields_out, fig[1] - fields_out])
-                        unobstructed = False
-                    else:
-                        unobstructed = False
-                else:
-                    unobstructed = False
-                fields_out += 1
-            # --
-            unobstructed = True
-            fields_out = 1
-            while unobstructed:
-                if 0 <= fig[0] - fields_out <= 7 and 0 <= fig[1] - fields_out <= 7:
-                    if board_mat[fig[0] - fields_out][fig[1] - fields_out] == 0:
-                        posibs.append([fig[0] - fields_out, fig[1] - fields_out])
-                    elif (is_white and board_mat[fig[0] - fields_out][fig[1] - fields_out] > 10) or (
-                            not is_white and board_mat[fig[0] - fields_out][fig[1] - fields_out] < 10):
-                        posibs.append([fig[0] - fields_out, fig[1] - fields_out])
-                        unobstructed = False
-                    else:
-                        unobstructed = False
-                else:
-                    unobstructed = False
-                fields_out += 1
+        pm += figure.queen_moves(bm, fp, iw)
 
-    return posibs
+    return pm
 
 # DRAW BOARD
 def draw_board(board_m, board_tm, board_pos, board_square_size, playing_as_white):
@@ -548,7 +274,7 @@ def main():
     conn_established = False
 
     # PHASE 2 VARS
-    board_matrix = [[0 for i in range(8)] for j in range(8)]
+    board_matrix = initialize_board()
     board_tile_matrix = None
     board_tile_matrix_generated = False
     playing_as_white = True
@@ -566,29 +292,6 @@ def main():
     # 14: black sniper    0             7
     # 15: black king
     # 16: black queen
-
-    # PAWNS
-    for i in range(8):
-        #board_matrix[i][1] = 1
-        board_matrix[i][6] = 11
-
-    # OTHER FIGURES
-    board_matrix[0][0] = 2
-    board_matrix[1][0] = 3
-    board_matrix[2][0] = 4
-    board_matrix[3][0] = 5
-    board_matrix[4][0] = 6
-    board_matrix[5][0] = 4
-    board_matrix[6][0] = 3
-    board_matrix[7][0] = 2
-    board_matrix[0][7] = 12
-    board_matrix[1][7] = 13
-    board_matrix[2][7] = 14
-    board_matrix[3][7] = 15
-    board_matrix[4][7] = 16
-    board_matrix[5][7] = 14
-    board_matrix[6][7] = 13
-    board_matrix[7][7] = 12
 
     # GAME LOOP
     while running:
@@ -626,14 +329,14 @@ def main():
                         if not local_port_locked:
                             local_port_error = False
                             if local_port > 10:
-                                local_port = math.floor(local_port / 10)
+                                local_port = floor(local_port / 10)
                             else:
                                 local_port = 0
 
                         elif not conn_port_locked:
                             conn_port_error = False
                             if conn_port > 10:
-                                conn_port = math.floor(conn_port / 10)
+                                conn_port = floor(conn_port / 10)
                             else:
                                 conn_port = 0
 
@@ -710,12 +413,12 @@ def main():
                         LAST_REC_DATA = None
                         conn_established = True
                         conn_socket = LAST_REC_ADDR
-                        threading.Thread(target=conn_send, args=(local_socket, "PyChessByNicoConnAcc", conn_socket)).start()
+                        Thread(target=conn_send, args=(local_socket, "PyChessByNicoConnAcc", conn_socket)).start()
                         game_phase = 2
                     if not conn_started:
                         conn_started = True
                         local_socket.bind(("", local_port))
-                        threading.Thread(target=conn_rec, args=(local_socket,)).start()
+                        Thread(target=conn_rec, args=(local_socket,)).start()
                     render_text("Waiting for a connection...", SCREEN_W*0.33, SCREEN_H*0.1, "L")
 
 
@@ -752,8 +455,8 @@ def main():
                     if not conn_started:
                         conn_started = True
                         local_socket.bind(("", local_port))
-                        threading.Thread(target=conn_send, args=(local_socket, "PyChessByNicoConnReq", (conn_addr, conn_port))).start()
-                        threading.Thread(target=conn_rec, args=(local_socket,)).start()
+                        Thread(target=conn_send, args=(local_socket, "PyChessByNicoConnReq", (conn_addr, conn_port))).start()
+                        Thread(target=conn_rec, args=(local_socket,)).start()
                     render_text("Establishing connection...", SCREEN_W * 0.33, SCREEN_H * 0.1, "L")
 
         # PHASE 2: ...
