@@ -6,9 +6,9 @@ def pawn_moves(bm, fp, iw):
             pm.append([fp[0], fp[1] + 1])
             if fp[1] == 1:
                 pm.append([fp[0], fp[1] + 2])
-        if 0 < fp[0] and bm[fp[0] - 1][fp[1] + 1]:
+        if 0 < fp[0] and bm[fp[0] - 1][fp[1] + 1] > 10:
             pm.append([fp[0] - 1, fp[1] + 1])
-        if 7 > fp[0] and bm[fp[0] + 1][fp[1] + 1]:
+        if 7 > fp[0] and bm[fp[0] + 1][fp[1] + 1] > 10:
             pm.append([fp[0] + 1, fp[1] + 1])
     else:
         # TILE IN FRONT IS EMPTY
@@ -16,9 +16,9 @@ def pawn_moves(bm, fp, iw):
             pm.append([fp[0], fp[1] - 1])
             if fp[1] == 6:
                 pm.append([fp[0], fp[1] - 2])
-        if 0 < fp[0] and bm[fp[0] - 1][fp[1] - 1]:
+        if 0 < fp[0] and 0 < bm[fp[0] - 1][fp[1] - 1] < 10:
             pm.append([fp[0] - 1, fp[1] - 1])
-        if 7 > fp[0] and bm[fp[0] + 1][fp[1] - 1]:
+        if 7 > fp[0] and 0 < bm[fp[0] + 1][fp[1] - 1] < 10:
             pm.append([fp[0] + 1, fp[1] - 1])
     return pm
 

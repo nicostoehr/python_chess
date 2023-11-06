@@ -176,45 +176,52 @@ def calc_possible_moves(bm, fp, iw, codec = DefaultFigureCodec):
         pm += figure.pawn_moves(bm, fp, iw)
 
     # BLACK PAWN
-    if clicked_fig == codec.b_p:
+    elif clicked_fig == codec.b_p:
         pm += figure.pawn_moves(bm, fp, iw)
 
     # CASTLE
-    if clicked_fig == codec.w_r or clicked_fig == codec.b_r:
+    elif clicked_fig == codec.w_r or clicked_fig == codec.b_r:
         pm += figure.rook_moves(bm, fp, iw)
 
     # HORSE
-    if clicked_fig == codec.w_kn or clicked_fig == codec.b_kn:
+    elif clicked_fig == codec.w_kn or clicked_fig == codec.b_kn:
         pm += figure.knight_moves(bm, fp, iw)
 
     # SNIPER
-    if clicked_fig == codec.w_b or clicked_fig == codec.b_b:
+    elif clicked_fig == codec.w_b or clicked_fig == codec.b_b:
         pm += figure.bishop_moves(bm, fp, iw)
 
     # KING
-    if clicked_fig == codec.w_k or clicked_fig == codec.b_k:
+    elif clicked_fig == codec.w_k or clicked_fig == codec.b_k:
         pm += figure.king_moves(bm, fp, iw)
 
     # QUEEN
-    if clicked_fig == codec.w_q or clicked_fig == codec.b_q:
+    elif clicked_fig == codec.w_q or clicked_fig == codec.b_q:
         pm += figure.queen_moves(bm, fp, iw)
 
     return pm
 
 # DRAW BOARD
-def draw_board(board_m, board_tm, board_pos, board_square_size, playing_as_white):
+def draw_board(board_m, board_tm, board_pos, board_square_size, playing_as_white, move_able = True):
     global CLICKED_TILE, POSSIBLE_MOVES
     new_click = None
     for i in range(len(board_tm)):
         for j in range(len(board_tm[i])):
-            if board_tm[i][j].draw():
-                new_click = [i, j]
+            if playing_as_white:
+                if board_tm[i][j].draw():
+                    new_click = [i, j]
+            else:
+                if board_tm[7 - i][7 - j].draw():
+                    new_click = [i, j]
 
             if board_m[i][j] > 0:
                 tile_text = L_FONT.render(str(board_m[i][j]), True, colors.BLACK)
-                SCREEN.blit(tile_text, (i * board_square_size + board_pos[0] + board_square_size * 0.25, (7 - j) * board_square_size + board_pos[1] + board_square_size * 0.2))
+                if playing_as_white:
+                    SCREEN.blit(tile_text, (i * board_square_size + board_pos[0] + board_square_size * 0.25, (7 - j) * board_square_size + board_pos[1] + board_square_size * 0.2))
+                else:
+                    SCREEN.blit(tile_text, ((7 - i) * board_square_size + board_pos[0] + board_square_size * 0.25, j * board_square_size + board_pos[1] + board_square_size * 0.2))
 
-    if new_click:
+    if new_click and move_able:
         if CLICKED_TILE:
             if new_click == CLICKED_TILE:
                 CLICKED_TILE = None
@@ -233,18 +240,33 @@ def draw_board(board_m, board_tm, board_pos, board_square_size, playing_as_white
                 CLICKED_TILE = new_click
                 POSSIBLE_MOVES = calc_possible_moves(board_m, new_click, playing_as_white)
 
-    if CLICKED_TILE:
-        BoardTile((CLICKED_TILE[0] * board_square_size + board_pos[0],
-                   (7 - CLICKED_TILE[1]) * board_square_size + board_pos[1]), board_square_size, colors.GREEN).sketch()
-        tile_text = L_FONT.render(str(board_m[CLICKED_TILE[0]][CLICKED_TILE[1]]), True, colors.BLACK)
-        SCREEN.blit(tile_text, (CLICKED_TILE[0] * board_square_size + board_pos[0] + board_square_size * 0.25,
-                                (7 - CLICKED_TILE[1]) * board_square_size + board_pos[1] + board_square_size * 0.2))
+    if CLICKED_TILE and move_able:
+        if playing_as_white:
+            BoardTile((CLICKED_TILE[0] * board_square_size + board_pos[0],
+                       (7 - CLICKED_TILE[1]) * board_square_size + board_pos[1]), board_square_size, colors.GREEN).sketch()
+            tile_text = L_FONT.render(str(board_m[CLICKED_TILE[0]][CLICKED_TILE[1]]), True, colors.BLACK)
+            SCREEN.blit(tile_text, (CLICKED_TILE[0] * board_square_size + board_pos[0] + board_square_size * 0.25,
+                                    (7 - CLICKED_TILE[1]) * board_square_size + board_pos[1] + board_square_size * 0.2))
+        else:
+            BoardTile(((7 - CLICKED_TILE[0]) * board_square_size + board_pos[0],
+                       CLICKED_TILE[1] * board_square_size + board_pos[1]), board_square_size,
+                      colors.GREEN).sketch()
+            tile_text = L_FONT.render(str(board_m[CLICKED_TILE[0]][CLICKED_TILE[1]]), True, colors.BLACK)
+            SCREEN.blit(tile_text, ((7 - CLICKED_TILE[0]) * board_square_size + board_pos[0] + board_square_size * 0.25,
+                                    CLICKED_TILE[1] * board_square_size + board_pos[1] + board_square_size * 0.2))
 
         for tile in POSSIBLE_MOVES:
-            BoardTile((tile[0] * board_square_size + board_pos[0], (7 - tile[1]) * board_square_size + board_pos[1]), board_square_size, colors.RED).sketch()
-            if board_m[tile[0]][tile[1]] > 0:
-                tile_text = L_FONT.render(str(board_m[tile[0]][tile[1]]), True, colors.BLACK)
-                SCREEN.blit(tile_text, (tile[0] * board_square_size + board_pos[0] + board_square_size * 0.25, (7 - tile[1]) * board_square_size + board_pos[1] + board_square_size * 0.2))
+            if playing_as_white:
+                BoardTile((tile[0] * board_square_size + board_pos[0], (7 - tile[1]) * board_square_size + board_pos[1]), board_square_size, colors.RED).sketch()
+                if board_m[tile[0]][tile[1]] > 0:
+                    tile_text = L_FONT.render(str(board_m[tile[0]][tile[1]]), True, colors.BLACK)
+                    SCREEN.blit(tile_text, (tile[0] * board_square_size + board_pos[0] + board_square_size * 0.25, (7 - tile[1]) * board_square_size + board_pos[1] + board_square_size * 0.2))
+            else:
+                BoardTile(
+                    ((7 - tile[0]) * board_square_size + board_pos[0], tile[1] * board_square_size + board_pos[1]), board_square_size, colors.RED).sketch()
+                if board_m[tile[0]][tile[1]] > 0:
+                    tile_text = L_FONT.render(str(board_m[tile[0]][tile[1]]), True, colors.BLACK)
+                    SCREEN.blit(tile_text, ((7 - tile[0]) * board_square_size + board_pos[0] + board_square_size * 0.25, tile[1] * board_square_size + board_pos[1] + board_square_size * 0.2))
 
 
 # MAIN LOOP
@@ -279,21 +301,9 @@ def main():
     board_matrix = initialize_board()
     board_tile_matrix = None
     board_tile_matrix_generated = False
-    playing_as_white = True
-    # TILE CODINGS:
-    # 0: empty tile
-    # 1: white pawn
-    # 2: white castle   7|    BLACK
-    # 3: white horse     |
-    # 4: white sniper    |
-    # 5: white king      |
-    # 6: white queen     |
-    # 11: black pawn     |
-    # 12: black castle   |    WHITE
-    # 13: black horse   0|_ _ _ _ _ _ _ _
-    # 14: black sniper    0             7
-    # 15: black king
-    # 16: black queen
+    playing_as_white = False
+    game_ongoing = True
+    game_moves = 0
 
     # GAME LOOP
     while running:
@@ -468,7 +478,17 @@ def main():
                 board_tile_matrix = init_board((368, 32), 100, colors.WHITE, colors.DARK_BLUE)
                 board_tile_matrix_generated = True
 
-            draw_board(board_matrix,board_tile_matrix, (368, 32), 100, playing_as_white)
+            if game_ongoing:
+                # ROUND IF WHITE
+                if game_moves % 2 == 0 and playing_as_white:
+                    draw_board(board_matrix, board_tile_matrix, (368, 32), 100, playing_as_white)
+
+
+                # ROUND IF BLACK
+                else:
+                    draw_board(board_matrix, board_tile_matrix, (368, 32), 100, playing_as_white)
+
+            #draw_board(board_matrix, board_tile_matrix, (368, 32), 100, playing_as_white)
 
         # OUTPUT SCREEN IN 60 FPS
         pygame.display.flip()
