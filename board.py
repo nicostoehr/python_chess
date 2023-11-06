@@ -16,7 +16,7 @@ def initialize_board(c = DefaultFigureCodec):
     m = [[0 for i in range(8)] for j in range(8)]
     # PAWNS
     for i in range(8):
-        #m[i][1] = c.w_p
+        m[i][1] = c.w_p
         m[i][6] = c.b_p
 
     # OTHER FIGURES

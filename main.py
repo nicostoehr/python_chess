@@ -8,7 +8,7 @@ import colors
 import figure
 
 from math import floor
-from board import initialize_board
+from board import initialize_board, DefaultFigureCodec
 from threading import Thread
 
 
@@ -167,36 +167,36 @@ def init_board(board_pos, board_square_size, board_base_color, board_square_colo
 
 
 # CALC POSSIBLE MOVES
-def calc_possible_moves(bm, fp, iw):
+def calc_possible_moves(bm, fp, iw, codec = DefaultFigureCodec):
     clicked_fig = bm[fp[0]][fp[1]]
     pm = []
 
     # WHITE PAWN
-    if clicked_fig == 1:
+    if clicked_fig == codec.w_p:
         pm += figure.pawn_moves(bm, fp, iw)
 
     # BLACK PAWN
-    if clicked_fig == 11:
+    if clicked_fig == codec.b_p:
         pm += figure.pawn_moves(bm, fp, iw)
 
     # CASTLE
-    if clicked_fig == 2 or clicked_fig == 12:
+    if clicked_fig == codec.w_r or clicked_fig == codec.b_r:
         pm += figure.rook_moves(bm, fp, iw)
 
     # HORSE
-    if clicked_fig == 3 or clicked_fig == 13:
+    if clicked_fig == codec.w_kn or clicked_fig == codec.b_kn:
         pm += figure.knight_moves(bm, fp, iw)
 
     # SNIPER
-    if clicked_fig == 4 or clicked_fig == 14:
+    if clicked_fig == codec.w_b or clicked_fig == codec.b_b:
         pm += figure.bishop_moves(bm, fp, iw)
 
     # KING
-    if clicked_fig == 5 or clicked_fig == 15:
+    if clicked_fig == codec.w_k or clicked_fig == codec.b_k:
         pm += figure.king_moves(bm, fp, iw)
 
     # QUEEN
-    if clicked_fig == 6 or clicked_fig == 16:
+    if clicked_fig == codec.w_q or clicked_fig == codec.b_q:
         pm += figure.queen_moves(bm, fp, iw)
 
     return pm
@@ -208,7 +208,7 @@ def draw_board(board_m, board_tm, board_pos, board_square_size, playing_as_white
     for i in range(len(board_tm)):
         for j in range(len(board_tm[i])):
             if board_tm[i][j].draw():
-                new_click = (i, j)
+                new_click = [i, j]
 
             if board_m[i][j] > 0:
                 tile_text = L_FONT.render(str(board_m[i][j]), True, colors.BLACK)
@@ -220,8 +220,10 @@ def draw_board(board_m, board_tm, board_pos, board_square_size, playing_as_white
                 CLICKED_TILE = None
                 POSSIBLE_MOVES = []
             elif new_click in POSSIBLE_MOVES:
-                pass
-                # TODO: DO MOVE
+                board_m[new_click[0]][new_click[1]] = board_m[CLICKED_TILE[0]][CLICKED_TILE[1]]
+                board_m[CLICKED_TILE[0]][CLICKED_TILE[1]] = 0
+                CLICKED_TILE = None
+                POSSIBLE_MOVES = []
             else:
                 if playing_as_white and 0 < board_m[new_click[0]][new_click[1]] < 10 or not playing_as_white and 10 < board_m[new_click[0]][new_click[1]]:
                     CLICKED_TILE = new_click

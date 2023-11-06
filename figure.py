@@ -95,7 +95,6 @@ def knight_moves(bm, fp, iw):
     pm = []
     for i, j in [[-1, 2], [1, 2], [2, -1], [2, 1], [-1, -2], [1, -2], [-2, -1], [-2, 1]]:
         if 0 <= fp[0] + i <= 7 and 0 <= fp[1] + j <= 7:
-            print(f"possible field: {fp[0] + i}, {fp[1] + j}")
             if (iw and bm[fp[0] + i][fp[1] + j] > 10) or (not iw and bm[fp[0] + i][fp[1] + j] < 10) or bm[fp[0] + i][
                 fp[1] + j] == 0:
                 pm.append([fp[0] + i, fp[1] + j])
