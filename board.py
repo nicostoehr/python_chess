@@ -12,6 +12,7 @@ class DefaultFigureCodec:
     b_k = 15
     b_q = 16
 
+
 def initialize_board(c = DefaultFigureCodec):
     m = [[0 for i in range(8)] for j in range(8)]
     # PAWNS
@@ -37,5 +38,5 @@ def initialize_board(c = DefaultFigureCodec):
     m[6][7] = c.b_kn
     m[7][7] = c.b_r
 
-    #RETURN
+    # RETURN
     return m
