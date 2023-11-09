@@ -27,7 +27,7 @@ L_FONT = pygame.font.SysFont("Arial", 48)
 M_FONT = pygame.font.SysFont("Arial", 30)
 S_FONT = pygame.font.SysFont("Arial", 18)
 FPS = 60
-GAME_DEBUG = True
+GAME_DEBUG = False
 TRANSMISSION_DEBUG = True
 LAST_REC_DATA = None
 LAST_REC_ADDR = None
@@ -536,7 +536,7 @@ def main():
                     game_phase = 3
 
         # PHASE 3
-        elif game_phase == 3 or GAME_DEBUG:
+        elif game_phase == 3 and not GAME_DEBUG:
             gg_text = XL_FONT.render(game_result, True, colors.WHITE)
             SCREEN.blit(gg_text, (SCREEN_W * 0.4, SCREEN_H * 0.4))
 
