@@ -7,6 +7,7 @@ import socket
 import colors
 import figure
 
+from random import randint
 from math import floor
 from board import initialize_board, DefaultFigureCodec
 from threading import Thread
@@ -32,6 +33,8 @@ LAST_REC_DATA = None
 LAST_REC_ADDR = None
 CLICKED_TILE = None
 POSSIBLE_MOVES = []
+MOVE_PLAYED = None
+MOVE_REQUESTED = False
 
 
 # OBJECT CLASSES
@@ -201,9 +204,10 @@ def calc_possible_moves(bm, fp, iw, codec = DefaultFigureCodec):
 
     return pm
 
+
 # DRAW BOARD
 def draw_board(board_m, board_tm, board_pos, board_square_size, playing_as_white, move_able = True):
-    global CLICKED_TILE, POSSIBLE_MOVES
+    global CLICKED_TILE, POSSIBLE_MOVES, MOVE_PLAYED
     new_click = None
     for i in range(len(board_tm)):
         for j in range(len(board_tm[i])):
@@ -229,6 +233,7 @@ def draw_board(board_m, board_tm, board_pos, board_square_size, playing_as_white
             elif new_click in POSSIBLE_MOVES:
                 board_m[new_click[0]][new_click[1]] = board_m[CLICKED_TILE[0]][CLICKED_TILE[1]]
                 board_m[CLICKED_TILE[0]][CLICKED_TILE[1]] = 0
+                MOVE_PLAYED = [CLICKED_TILE, new_click]
                 CLICKED_TILE = None
                 POSSIBLE_MOVES = []
             else:
@@ -272,8 +277,8 @@ def draw_board(board_m, board_tm, board_pos, board_square_size, playing_as_white
 # MAIN LOOP
 def main():
 
-    #GLOBAL VARS
-    global LAST_REC_DATA, LAST_REC_ADDR
+    # GLOBAL VARS
+    global LAST_REC_DATA, LAST_REC_ADDR, MOVE_PLAYED, MOVE_REQUESTED
 
     # SOCKET VARS
     local_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -304,6 +309,7 @@ def main():
     playing_as_white = False
     game_ongoing = True
     game_moves = 0
+    game_result = ""
 
     # GAME LOOP
     while running:
@@ -411,7 +417,7 @@ def main():
                 game_phase = 1
 
         # PHASE 1: UDP CONN SETUP
-        if game_phase == 1 and not GAME_DEBUG:
+        elif game_phase == 1 and not GAME_DEBUG:
             # HOST CONN SETUP
             if host_mode:
                 if not local_port_locked:
@@ -425,14 +431,18 @@ def main():
                         LAST_REC_DATA = None
                         conn_established = True
                         conn_socket = LAST_REC_ADDR
-                        Thread(target=conn_send, args=(local_socket, "PyChessByNicoConnAcc", conn_socket)).start()
+                        paw = randint(1, 2)
+                        Thread(target=conn_send, args=(local_socket, f"PyChessByNicoConnAcc.{paw}", conn_socket)).start()
+                        if paw == 1:
+                            playing_as_white = True
+                        else:
+                            playing_as_white = False
                         game_phase = 2
                     if not conn_started:
                         conn_started = True
                         local_socket.bind(("", local_port))
                         Thread(target=conn_rec, args=(local_socket,)).start()
                     render_text("Waiting for a connection...", SCREEN_W*0.33, SCREEN_H*0.1, "L")
-
 
             # CLIENT CONN SETUP
             else:
@@ -459,7 +469,11 @@ def main():
                         render_text(f"With each ### < 256", 0.1 * SCREEN_W, 0.3 * SCREEN_H, "l", colors.RED)
 
                 elif not conn_established:
-                    if LAST_REC_DATA  == "PyChessByNicoConnAcc":
+                    if LAST_REC_DATA is not None and LAST_REC_DATA.split(".")[0] == "PyChessByNicoConnAcc":
+                        if LAST_REC_DATA.split(".")[1] == "1":
+                            playing_as_white = False
+                        else:
+                            playing_as_white = True
                         LAST_REC_DATA = None
                         conn_established = True
                         conn_socket = LAST_REC_ADDR
@@ -472,7 +486,7 @@ def main():
                     render_text("Establishing connection...", SCREEN_W * 0.33, SCREEN_H * 0.1, "L")
 
         # PHASE 2: ...
-        if game_phase == 2 or GAME_DEBUG:
+        elif game_phase == 2 and not GAME_DEBUG:
             # GENERATE BOARD TILES
             if not board_tile_matrix_generated:
                 board_tile_matrix = init_board((368, 32), 100, colors.WHITE, colors.DARK_BLUE)
@@ -480,15 +494,51 @@ def main():
 
             if game_ongoing:
                 # ROUND IF WHITE
-                if game_moves % 2 == 0 and playing_as_white:
+                if game_moves % 2 == 0 and playing_as_white or game_moves % 2 == 1 and not playing_as_white:
                     draw_board(board_matrix, board_tile_matrix, (368, 32), 100, playing_as_white)
-
+                    if MOVE_PLAYED is not None:
+                        Thread(target=conn_send, args=(local_socket, f"{MOVE_PLAYED[0][0]}.{MOVE_PLAYED[0][1]}-{MOVE_PLAYED[1][0]}.{MOVE_PLAYED[1][1]}", conn_socket)).start()
+                        MOVE_REQUESTED = False
+                        MOVE_PLAYED = None
+                        game_moves += 1
 
                 # ROUND IF BLACK
                 else:
-                    draw_board(board_matrix, board_tile_matrix, (368, 32), 100, playing_as_white)
+                    draw_board(board_matrix, board_tile_matrix, (368, 32), 100, playing_as_white, False)
+                    if not MOVE_REQUESTED:
+                        Thread(target=conn_rec, args=(local_socket,)).start()
+                        MOVE_REQUESTED = True
+                    if LAST_REC_DATA is not None:
+                        rds = LAST_REC_DATA.split("-")
+                        ds1 = rds[0].split(".")
+                        ds2 = rds[1].split(".")
+                        board_matrix[int(ds2[0])][int(ds2[1])] = board_matrix[int(ds1[0])][int(ds1[1])]
+                        board_matrix[int(ds1[0])][int(ds1[1])] = 0
+                        LAST_REC_DATA = None
+                        game_moves += 1
 
-            #draw_board(board_matrix, board_tile_matrix, (368, 32), 100, playing_as_white)
+                # CHECK IF GAME ENDED
+                bkf = wkf = False
+                for i in board_matrix:
+                    for j in i:
+                        if j == 5:
+                            wkf = True
+                        elif j == 15:
+                            bkf = True
+
+                if not wkf and playing_as_white or not bkf and not playing_as_white:
+                    game_result = "YOU LOST!"
+                    game_ongoing = False
+                    game_phase = 3
+                elif not wkf and not playing_as_white or not bkf and playing_as_white:
+                    game_result = "YOU WON!"
+                    game_ongoing = False
+                    game_phase = 3
+
+        # PHASE 3
+        elif game_phase == 3 or GAME_DEBUG:
+            gg_text = XL_FONT.render(game_result, True, colors.WHITE)
+            SCREEN.blit(gg_text, (SCREEN_W * 0.4, SCREEN_H * 0.4))
 
         # OUTPUT SCREEN IN 60 FPS
         pygame.display.flip()
