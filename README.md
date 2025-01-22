@@ -13,4 +13,4 @@ Missing features(future updates):
 - en passant
 
 Additional note:
-There is no system in place to register wether any party is in check. It is possible to capture the enemy king if given the chance. The game ends when either king is captured.
+There is no system in place to register whether any party is in check. It is possible to capture the enemy king if given the chance. The game ends when either king is captured.
