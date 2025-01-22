@@ -2,6 +2,7 @@ Chess multiplayer in python using UDP for network transmission, pygame for graph
 
 Be sure you have pygame installed!
 > pip install pygame
+
 Offical site: https://www.pygame.org/docs/
 
 Easly conntect over UDP by choosing to host or join a game. Both parties have to select a PORT. The party that joins the game has to input the IP and PORT of the host game.
