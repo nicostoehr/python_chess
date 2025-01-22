@@ -206,7 +206,7 @@ def calc_possible_moves(bm, fp, iw, codec = DefaultFigureCodec):
 
 
 # DRAW BOARD
-def draw_board(board_m, board_tm, board_pos, board_square_size, playing_as_white, move_able = True):
+def draw_board(board_m, figure_d, board_tm, board_pos, board_square_size, playing_as_white, move_able = True):
     global CLICKED_TILE, POSSIBLE_MOVES, MOVE_PLAYED
     new_click = None
     for i in range(len(board_tm)):
@@ -221,9 +221,12 @@ def draw_board(board_m, board_tm, board_pos, board_square_size, playing_as_white
             if board_m[i][j] > 0:
                 tile_text = L_FONT.render(str(board_m[i][j]), True, colors.BLACK)
                 if playing_as_white:
-                    SCREEN.blit(tile_text, (i * board_square_size + board_pos[0] + board_square_size * 0.25, (7 - j) * board_square_size + board_pos[1] + board_square_size * 0.2))
+                    # SCREEN.blit(tile_text, (i * board_square_size + board_pos[0] + board_square_size * 0.25, (7 - j) * board_square_size + board_pos[1] + board_square_size * 0.2))
+                    SCREEN.blit(figure_d[board_m[i][j]], (i * board_square_size + board_pos[0] + board_square_size * 0.25 - 27, (7 - j) * board_square_size + board_pos[1] + board_square_size * 0.2 - 22))
+
                 else:
-                    SCREEN.blit(tile_text, ((7 - i) * board_square_size + board_pos[0] + board_square_size * 0.25, j * board_square_size + board_pos[1] + board_square_size * 0.2))
+                    # SCREEN.blit(tile_text, ((7 - i) * board_square_size + board_pos[0] + board_square_size * 0.25, j * board_square_size + board_pos[1] + board_square_size * 0.2))
+                    SCREEN.blit(figure_d[board_m[i][j]], ((7 - i) * board_square_size + board_pos[0] + board_square_size * 0.25 - 27, j * board_square_size + board_pos[1] + board_square_size * 0.2 - 22))
 
     if new_click and move_able:
         if CLICKED_TILE:
@@ -249,29 +252,37 @@ def draw_board(board_m, board_tm, board_pos, board_square_size, playing_as_white
         if playing_as_white:
             BoardTile((CLICKED_TILE[0] * board_square_size + board_pos[0],
                        (7 - CLICKED_TILE[1]) * board_square_size + board_pos[1]), board_square_size, colors.GREEN).sketch()
-            tile_text = L_FONT.render(str(board_m[CLICKED_TILE[0]][CLICKED_TILE[1]]), True, colors.BLACK)
-            SCREEN.blit(tile_text, (CLICKED_TILE[0] * board_square_size + board_pos[0] + board_square_size * 0.25,
-                                    (7 - CLICKED_TILE[1]) * board_square_size + board_pos[1] + board_square_size * 0.2))
+            BoardTile((CLICKED_TILE[0] * board_square_size + board_pos[0] + 5,
+                       (7 - CLICKED_TILE[1]) * board_square_size + board_pos[1] + 5), board_square_size - 10, colors.WHITE if (CLICKED_TILE[0] + CLICKED_TILE[1]) % 2 else colors.DARK_BLUE).sketch()
+            SCREEN.blit(figure_d[board_m[CLICKED_TILE[0]][CLICKED_TILE[1]]], (CLICKED_TILE[0] * board_square_size + board_pos[0] + board_square_size * 0.25 - 27,
+                                    (7 - CLICKED_TILE[1]) * board_square_size + board_pos[1] + board_square_size * 0.2 - 22))
         else:
             BoardTile(((7 - CLICKED_TILE[0]) * board_square_size + board_pos[0],
                        CLICKED_TILE[1] * board_square_size + board_pos[1]), board_square_size,
                       colors.GREEN).sketch()
-            tile_text = L_FONT.render(str(board_m[CLICKED_TILE[0]][CLICKED_TILE[1]]), True, colors.BLACK)
-            SCREEN.blit(tile_text, ((7 - CLICKED_TILE[0]) * board_square_size + board_pos[0] + board_square_size * 0.25,
-                                    CLICKED_TILE[1] * board_square_size + board_pos[1] + board_square_size * 0.2))
+            BoardTile(((7 - CLICKED_TILE[0]) * board_square_size + board_pos[0] + 5,
+                       CLICKED_TILE[1] * board_square_size + board_pos[1] + 5), board_square_size - 10,
+                      colors.WHITE if (CLICKED_TILE[0] + CLICKED_TILE[1]) % 2 else colors.DARK_BLUE).sketch()
+            SCREEN.blit(figure_d[board_m[CLICKED_TILE[0]][CLICKED_TILE[1]]], ((7 - CLICKED_TILE[0]) * board_square_size + board_pos[0] + board_square_size * 0.25 - 27,
+                                    CLICKED_TILE[1] * board_square_size + board_pos[1] + board_square_size * 0.2 - 22))
+            
 
         for tile in POSSIBLE_MOVES:
             if playing_as_white:
                 BoardTile((tile[0] * board_square_size + board_pos[0], (7 - tile[1]) * board_square_size + board_pos[1]), board_square_size, colors.RED).sketch()
+                BoardTile((tile[0] * board_square_size + board_pos[0] + 5, (7 - tile[1]) * board_square_size + board_pos[1] + 5) , board_square_size - 10, colors.WHITE if (tile[0] + tile[1]) % 2 else colors.DARK_BLUE).sketch()
                 if board_m[tile[0]][tile[1]] > 0:
-                    tile_text = L_FONT.render(str(board_m[tile[0]][tile[1]]), True, colors.BLACK)
-                    SCREEN.blit(tile_text, (tile[0] * board_square_size + board_pos[0] + board_square_size * 0.25, (7 - tile[1]) * board_square_size + board_pos[1] + board_square_size * 0.2))
+                    # tile_text = L_FONT.render(str(board_m[tile[0]][tile[1]]), True, colors.BLACK)
+                    # SCREEN.blit(tile_text, (tile[0] * board_square_size + board_pos[0] + board_square_size * 0.25, (7 - tile[1]) * board_square_size + board_pos[1] + board_square_size * 0.2))
+                    SCREEN.blit(figure_d[board_m[tile[0]][tile[1]]], (tile[0] * board_square_size + board_pos[0] + board_square_size * 0.25 - 27, (7 - tile[1]) * board_square_size + board_pos[1] + board_square_size * 0.2 - 22))
+                    
             else:
-                BoardTile(
-                    ((7 - tile[0]) * board_square_size + board_pos[0], tile[1] * board_square_size + board_pos[1]), board_square_size, colors.RED).sketch()
+                BoardTile(((7 - tile[0]) * board_square_size + board_pos[0], tile[1] * board_square_size + board_pos[1]), board_square_size, colors.RED).sketch()
+                BoardTile(((7 - tile[0]) * board_square_size + board_pos[0] + 5, tile[1] * board_square_size + board_pos[1] + 5), board_square_size - 10, colors.WHITE if (tile[0] + tile[1]) % 2 else colors.DARK_BLUE).sketch()
                 if board_m[tile[0]][tile[1]] > 0:
-                    tile_text = L_FONT.render(str(board_m[tile[0]][tile[1]]), True, colors.BLACK)
-                    SCREEN.blit(tile_text, ((7 - tile[0]) * board_square_size + board_pos[0] + board_square_size * 0.25, tile[1] * board_square_size + board_pos[1] + board_square_size * 0.2))
+                    # tile_text = L_FONT.render(str(board_m[tile[0]][tile[1]]), True, colors.BLACK)
+                    # SCREEN.blit(tile_text, ((7 - tile[0]) * board_square_size + board_pos[0] + board_square_size * 0.25, tile[1] * board_square_size + board_pos[1] + board_square_size * 0.2))
+                    SCREEN.blit(figure_d[board_m[tile[0]][tile[1]]], ((7 - tile[0]) * board_square_size + board_pos[0] + board_square_size * 0.25 - 27, tile[1] * board_square_size + board_pos[1] + board_square_size * 0.2 - 22))
 
 
 # MAIN LOOP
@@ -310,6 +321,22 @@ def main():
     game_ongoing = True
     game_moves = 0
     game_result = ""
+
+    # FIGURE TEXTURES
+    figure_dict = dict()
+    figure_dict[1] = pygame.image.load("textures/w_p.png")
+    figure_dict[2] = pygame.image.load("textures/w_r.png")
+    figure_dict[3] = pygame.image.load("textures/w_kn.png")
+    figure_dict[4] = pygame.image.load("textures/w_b.png")
+    figure_dict[5] = pygame.image.load("textures/w_k.png")
+    figure_dict[6] = pygame.image.load("textures/w_q.png")
+    figure_dict[11] = pygame.image.load("textures/b_p.png")
+    figure_dict[12] = pygame.image.load("textures/b_r.png")
+    figure_dict[13] = pygame.image.load("textures/b_kn.png")
+    figure_dict[14] = pygame.image.load("textures/b_b.png")
+    figure_dict[15] = pygame.image.load("textures/b_k.png")
+    figure_dict[16] = pygame.image.load("textures/b_q.png")
+
 
     # GAME LOOP
     while running:
@@ -495,7 +522,7 @@ def main():
             if game_ongoing:
                 # ROUND IF WHITE
                 if game_moves % 2 == 0 and playing_as_white or game_moves % 2 == 1 and not playing_as_white:
-                    draw_board(board_matrix, board_tile_matrix, (368, 32), 100, playing_as_white)
+                    draw_board(board_matrix, figure_dict, board_tile_matrix, (368, 32), 100, playing_as_white)
                     if MOVE_PLAYED is not None:
                         Thread(target=conn_send, args=(local_socket, f"{MOVE_PLAYED[0][0]}.{MOVE_PLAYED[0][1]}-{MOVE_PLAYED[1][0]}.{MOVE_PLAYED[1][1]}", conn_socket)).start()
                         MOVE_REQUESTED = False
@@ -504,7 +531,7 @@ def main():
 
                 # ROUND IF BLACK
                 else:
-                    draw_board(board_matrix, board_tile_matrix, (368, 32), 100, playing_as_white, False)
+                    draw_board(board_matrix, figure_dict, board_tile_matrix, (368, 32), 100, playing_as_white, False)
                     if not MOVE_REQUESTED:
                         Thread(target=conn_rec, args=(local_socket,)).start()
                         MOVE_REQUESTED = True
