@@ -350,6 +350,7 @@ def main():
             if event.type == pygame.KEYDOWN:
                 # GAME PHASE 1 KEY OPTIONS
                 if game_phase == 1:
+                    # Enter Key
                     if event.dict["key"] == 13:
                         if not local_port_locked:
                             if 1024 < local_port < 65535:
@@ -369,6 +370,9 @@ def main():
                                         break
                                 if addr_valid:
                                     conn_addr_locked = True
+                            elif len(conn_addr) == 0:
+                                conn_addr = "localhost"
+                                conn_addr_locked = True
 
                     elif event.dict["key"] == 8:
                         if not local_port_locked:
@@ -450,7 +454,7 @@ def main():
                 if not local_port_locked:
                     render_text("Enter port for UDP socket (confirm with enter): ", 0.1*SCREEN_W, 0.1*SCREEN_H, "l")
                     if local_port > 0:
-                        render_text(f"{local_port}", 0.65 * SCREEN_W, 0.1 * SCREEN_H, "l")
+                        render_text(f"{local_port}", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l")
                     if local_port_error:
                         render_text(f"Possible ports are in range 1024 - 65535", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l", colors.RED)
                 elif not conn_established:
@@ -476,21 +480,21 @@ def main():
                 if not local_port_locked:
                     render_text("Enter port for UDP socket (confirm with enter): ", 0.1 * SCREEN_W, 0.1 * SCREEN_H, "l")
                     if local_port > 0:
-                        render_text(f"{local_port}", 0.65 * SCREEN_W, 0.1 * SCREEN_H, "l")
+                        render_text(f"{local_port}", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l")
                     if local_port_error:
                         render_text(f"Possible ports are in range 1024 - 65535", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l", colors.RED)
 
                 elif not conn_port_locked:
                     render_text("Enter host port (confirm with enter): ", 0.1 * SCREEN_W, 0.1 * SCREEN_H, "l")
                     if conn_port > 0:
-                        render_text(f"{conn_port}", 0.52 * SCREEN_W, 0.1 * SCREEN_H, "l")
+                        render_text(f"{conn_port}", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l")
                     if conn_port_error:
                         render_text(f"Possible ports are in range 1024 - 65535", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l", colors.RED)
 
                 elif not conn_addr_locked:
                     render_text("Enter host ip (confirm with enter): ", 0.1 * SCREEN_W, 0.1 * SCREEN_H, "l")
                     if conn_addr:
-                        render_text(f"{conn_addr}", 0.5 * SCREEN_W, 0.1 * SCREEN_H, "l")
+                        render_text(f"{conn_addr}", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l")
                     if conn_addr_error:
                         render_text(f"IP has to be like ###.###.###.###", 0.1 * SCREEN_W, 0.2 * SCREEN_H, "l", colors.RED)
                         render_text(f"With each ### < 256", 0.1 * SCREEN_W, 0.3 * SCREEN_H, "l", colors.RED)
